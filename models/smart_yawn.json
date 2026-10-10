@@ -1,0 +1,61 @@
+{
+  "schema_version": 1,
+  "feature_names": [
+    "mar",
+    "ear_mean",
+    "ear_difference",
+    "mar_range",
+    "mar_mean",
+    "mar_std",
+    "ear_window_mean",
+    "mar_slope",
+    "window_seconds"
+  ],
+  "mean": [
+    0.36472404139051995,
+    0.1685709105214157,
+    0.03639541624281543,
+    0.31715620026388025,
+    0.340832342203224,
+    0.0970418547627306,
+    0.15981705238779034,
+    0.042136223212411714,
+    1.418462499999999
+  ],
+  "scale": [
+    0.29955854874411375,
+    0.07886749507355785,
+    0.04880724647035922,
+    0.2588776160012659,
+    0.2636402976196524,
+    0.09359261903765845,
+    0.04973276696457394,
+    0.21859533254115243,
+    0.2498538294558439
+  ],
+  "coefficients": [
+    2.0060188420409863,
+    -0.5945875280739337,
+    0.4350575159663973,
+    0.4838106427529384,
+    2.935807382962718,
+    0.45002172424541614,
+    0.07825638951685554,
+    -0.19068112321717243,
+    -0.5888131382007787
+  ],
+  "intercept": 0.12213232682311183,
+  "score_threshold": 0.5,
+  "persistence_seconds": 0.4,
+  "target": "draft_visual_yawn_candidate",
+  "calibrated_probability": false,
+  "label_status": "AI visual draft, not final ground truth",
+  "source_video_sha256": "fcbbe6053fc0bb452964f2b3f9f0b227fde7ae4c89e2abdcb83587bf446c8a0d",
+  "source_metrics_sha256": "5840f762019c56f890f6e93b9734b86e830833f2382a280e0193d21f7eeb8609",
+  "annotations_sha256": "63461c967c5a513da400bbd1077402646c9f6d1fb2e0e68e1089ae9dff39329e",
+  "landmark_model_sha256": "64184e229b263107bc2b804c6625db1341ff2bb731874b0bcc2fe6544e0bc9ff",
+  "sklearn_version": "1.9.1",
+  "training_rows": 320,
+  "threshold_selection": "fixed before fit, no test tuning",
+  "causal_window_seconds": 1.5
+}
