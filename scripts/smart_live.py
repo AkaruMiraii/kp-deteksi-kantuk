@@ -14,7 +14,7 @@ from .eye_alertness import EyeAlertness, EyeAwareDetector
 from .eye_duration import EyeClosureTracker
 from .landmark_diagnostics import process_frame
 from .mouth_duration import MouthOpeningTracker
-from .raw_video import file_sha256, read_raw_session
+from .raw_video import RawVideoRecorder, file_sha256, read_raw_session
 from .smart_display import render_dashboard
 from .smart_yawn import SmartYawn
 
@@ -75,7 +75,16 @@ def run(args):
     counts = Counter()
     frames = 0
     reason = "error"
+    recording = getattr(args, "record_video", False)
+    raw_recorder = dashboard_recorder = None
+    dashboard_padding = {}
+    failure = None
     try:
+        if recording:
+            raw_recorder = RawVideoRecorder(directory)
+            dashboard_directory = directory / "dashboard"
+            dashboard_directory.mkdir()
+            dashboard_recorder = RawVideoRecorder(dashboard_directory)
         options = vision.FaceLandmarkerOptions(
             base_options=BaseOptions(model_asset_path=str(face_model)),
             running_mode=vision.RunningMode.VIDEO,
@@ -89,6 +98,11 @@ def run(args):
                 stream, fieldnames=FIELDS + eye_fields if eye_alertness else FIELDS
             )
             writer.writeheader()
+            jsonl = (
+                stack.enter_context((directory / "frames.jsonl").open("w", encoding="utf-8"))
+                if recording
+                else None
+            )
             detector = stack.enter_context(vision.FaceLandmarker.create_from_options(options))
             if eye_alertness is not None:
                 detector = EyeAwareDetector(detector, eye_alertness)
@@ -107,11 +121,33 @@ def run(args):
                 if not capture.isOpened():
                     raise OSError("Camera cannot be opened.")
                 source = webcam_frames(capture)
+            source_close = getattr(source, "close", None)
+            if callable(source_close):
+                stack.callback(source_close)
             for index, timestamp, frame in source:
                 record, overlay = process_smart_frame(
                     frame, detector, timestamp, predictor, eyes, mouth
                 )
-                row = dict(record, frame_id=index, timestamp_ms=timestamp)
+                row = dict(record, frame_id=frames if recording else index, timestamp_ms=timestamp)
+                if recording:
+                    assert raw_recorder is not None and dashboard_recorder is not None
+                    assert jsonl is not None
+                    raw_recorder.write(timestamp, frame)
+                    height, width = overlay.shape[:2]
+                    bottom, right = height % 2, width % 2
+                    dashboard_padding = dict(
+                        original_width=width,
+                        original_height=height,
+                        padding_bottom=bottom,
+                        padding_right=right,
+                    )
+                    padded = cv2.copyMakeBorder(
+                        overlay, 0, bottom, 0, right, cv2.BORDER_CONSTANT, value=(0, 0, 0)
+                    )
+                    dashboard_recorder.write(timestamp, padded)
+                    row["source_frame_id"] = index
+                    jsonl.write(json.dumps(row) + "\n")
+                    jsonl.flush()
                 writer.writerow({k: row[k] for k in writer.fieldnames})
                 stream.flush()
                 counts[record["smart_yawn_state"]] += 1
@@ -131,10 +167,17 @@ def run(args):
                         break
             else:
                 reason = "source_complete"
+    except BaseException as error:
+        failure = error
+        reason = "interrupted" if isinstance(error, KeyboardInterrupt) else "error"
+        raise
     finally:
-        if capture is not None:
-            capture.release()
-        cv2.destroyAllWindows()
+        cleanup_errors = []
+        for close in ([capture.release] if capture is not None else []) + [cv2.destroyAllWindows]:
+            try:
+                close()
+            except BaseException as error:
+                cleanup_errors.append(error)
         summary = dict(
             frames=frames,
             exit_reason=reason,
@@ -150,7 +193,52 @@ def run(args):
             closed_fraction_note="30s EAR-based closed fraction, not validated 80-percent pupil PERCLOS",
             processing_ms_scope="existing detection plus causal ML, excludes capture/disk/GUI",
         )
-        (directory / "session.json").write_text(json.dumps(summary, indent=2), encoding="utf-8")
+        if recording:
+            for key, recorder in (
+                ("raw_video", raw_recorder),
+                ("dashboard_video", dashboard_recorder),
+            ):
+                metadata = dict(enabled=True, complete=False, frames=0, verified_frames=0)
+                if recorder is not None:
+                    try:
+                        metadata = dict(recorder.close())
+                    except BaseException as error:
+                        cleanup_errors.append(error)
+                        metadata.update(
+                            recorder.metadata or {}, frames=recorder.frames, complete=False
+                        )
+                        # A release failure must not leave the other resource open.
+                        for resource in (recorder.writer, recorder.mapping):
+                            if resource is not None:
+                                try:
+                                    if resource is recorder.writer:
+                                        resource.release()
+                                    else:
+                                        resource.close()
+                                except BaseException as release_error:
+                                    cleanup_errors.append(release_error)
+                summary[key] = metadata
+            summary["dashboard_video"].update(
+                overlay=True, directory="dashboard", **dashboard_padding
+            )
+            if failure is not None or cleanup_errors:
+                for key in ("raw_video", "dashboard_video"):
+                    summary[key]["complete"] = False
+        if cleanup_errors:
+            summary["exit_reason"] = "error"
+            summary["recording_errors"] = [repr(error) for error in cleanup_errors]
+        if failure is not None:
+            summary["error"] = repr(failure)
+        try:
+            (directory / "session.json").write_text(json.dumps(summary, indent=2), encoding="utf-8")
+        except BaseException as error:
+            cleanup_errors.append(error)
+        if cleanup_errors:
+            if failure is not None:
+                for error in cleanup_errors:
+                    failure.add_note(f"Cleanup failure: {error!r}")
+            else:
+                raise cleanup_errors[0]
     print(json.dumps(dict(output=str(directory), **summary), indent=2))
 
 
@@ -186,6 +274,9 @@ def main():
     parser.add_argument("--camera", type=int, default=0)
     parser.add_argument(
         "--eye-alertness", action="store_true", help="Experimental adaptive eye-only visual tiers."
+    )
+    parser.add_argument(
+        "--record-video", action="store_true", help="Record lossless raw and dashboard videos."
     )
     run(parser.parse_args())
 
