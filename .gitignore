@@ -3,3 +3,12 @@ outputs/
 __pycache__/
 *.py[cod]
 .env
+
+.venv*/
+build/
+dist/
+*.log
+*.zip
+.ruff_cache/
+models/sface.onnx
+models/anti_spoof/

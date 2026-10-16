@@ -1,0 +1,22 @@
+PROOF OF CONCEPT DETEKSI INDIKASI KANTUK
+
+Paket Windows portable. Ekstrak seluruh folder sebelum menjalankan KP_Deteksi_Kantuk.exe. Jangan memindahkan executable sendirian atau menghapus folder _internal dan models.
+
+Menjalankan:
+1. Klik dua kali KP_Deteksi_Kantuk.exe.
+2. Pilih indeks kamera (umumnya 0), kapasitas wajah, ambang EAR/MAR, dan durasi penutupan mata.
+3. Klik Mulai Kamera. Akses kamera baru dilakukan setelah tombol tersebut ditekan.
+4. Q: keluar; H: tampilkan rincian; ?: bantuan; C: kalibrasi peserta terpilih. Ikuti instruksi panel. Identitas perlu bukti pendaftaran sebelum penilaian per peserta tersedia.
+
+Konfigurasi awal: EAR 0,12; MAR 0,50; penutupan mata 1,5 detik; identitas sesi aktif, pendaftaran 180 detik, kapasitas satu wajah. Pemeriksaan keaslian tidak diaktifkan pada paket demonstrasi ini. Kapasitas lebih dari satu wajah adalah konfigurasi yang didukung, bukan bukti pengujian simultan.
+
+Batas penggunaan: indikator visual prototipe, bukan diagnosis medis. Pencocokan identitas dapat gagal atau meragukan; hasil tertunda tidak dianggap peserta teridentifikasi. Referensi identitas hanya disimpan di RAM selama proses. Kode detektor tidak dilatih ulang atau diubah oleh pengemasan.
+
+Penyimpanan: catatan pengujian ditulis ke _internal/outputs/multiperson di dalam folder paket. Pesan galat launcher ditulis ke error.log di sebelah executable. Simpan paket pada folder pengguna yang dapat ditulis, bukan Program Files. Rekaman video tidak diaktifkan secara default.
+
+Verifikasi tanpa kamera melalui terminal:
+KP_Deteksi_Kantuk.exe --self-test
+
+Paket ini adalah mode threshold + identitas sesi yang menjadi acuan laporan. Torch dan fitur anti-spoof tidak dibundel; jangan menjalankan mode tanpa --threshold-only. Untuk argumen CLI, gunakan --threshold-only --session-identity agar sesuai paket ini.
+
+Paket tidak ditandatangani secara digital. Windows mungkin menampilkan peringatan aplikasi tidak dikenal. Tidak perlu mematikan antivirus. Verifikasi SHA256 dengan manifest yang disertakan.
