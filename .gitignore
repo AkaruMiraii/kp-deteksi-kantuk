@@ -1,5 +1,19 @@
-.venv/
-outputs/
+# Local runtimes and build artifacts
+.venv*/
+runtime/
+build/
+dist/
+*.zip
+*.exe
 __pycache__/
 *.py[cod]
+# Session data and private artifacts
+outputs/
+data/
+recordings/
+*.log
 .env
+.env.*
+# Large optional weights are provisioned separately
+models/sface.onnx
+models/anti_spoof/

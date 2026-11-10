@@ -1,25 +1,43 @@
-# KP Deteksi Kantuk: Proof of Concept
+# KP Deteksi Indikasi Kantuk
 
-Duplikat runtime-only dari proyek lengkap. Tampilan dashboard dan parameter deteksi sama. Tidak berisi dataset, anotasi, materi belajar, laporan training, alat training, unit test, rekaman lama, cache atau riwayat Git. Model inferensi tetap diperlukan dan disertakan: Face Landmarker dan koefisien JSON kandidat menguap. Koefisien bukan data training mentah.
+Prototipe lokal Windows untuk mengamati landmark wajah, menghitung EAR/MAR, menampilkan status, dan menyimpan hasil sesi. Keputusan utama memakai penutupan mata beserta durasinya. Bukaan mulut merupakan informasi pendukung. Identitas sesi dan dukungan beberapa wajah masih eksperimental.
 
-## Setup pada clone/folder baru
+## Pengguna aplikasi portable
 
-Gunakan PowerShell dari folder ini:
+Paket siap jalan harus berupa ZIP aplikasi yang berisi `runtime/`, `app/`, dan `KP_Deteksi_Kantuk.bat`. Ekstrak seluruh ZIP, lalu jalankan BAT. Python tidak perlu dipasang untuk paket tersebut. Jangan jalankan dari dalam ZIP atau pisahkan launcher dari folder pendampingnya. Gunakan folder tanpa emoji. ZIP source dari tombol **Code > Download ZIP** bukan paket portable.
+
+Belum ada aset Release baru yang diterbitkan oleh pembaruan source ini. Jangan menganggap Download ZIP source sebagai installer.
+
+## Menjalankan source
+
+Gunakan Python 3.11 pada Windows dan jalankan dari root repository:
 
 ```powershell
-uv venv --python 3.11 .venv
-uv pip install --link-mode=copy --python .venv\Scripts\python.exe -r requirements.txt
+python -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -r requirements-poc.txt
+.\.venv\Scripts\python.exe kp_poc_entry.py
 ```
 
-## Dashboard dan perekaman
+Model `models/face_landmarker.task` tetap diperlukan. Siapkan model pengenalan wajah OpenCV SFace yang kompatibel sebagai `models/sface.onnx` sebelum menjalankan entry point ini. Bobot SFace tidak ditambahkan ke commit ini. Jangan mengganti nama sembarang model ONNX menjadi SFace.
+
+Untuk jalur satu wajah versi sebelumnya:
 
 ```powershell
 .\.venv\Scripts\python.exe run.py --eye-alertness
-.\.venv\Scripts\python.exe run.py --eye-alertness --record-video
 ```
 
-Kalibrasi dengan mata terbuka alami selama 5 detik. R untuk kalibrasi ulang, Q untuk selesai dan finalisasi file. Output setiap sesi berada di `outputs/smart_yawn/`. Perintah tanpa `--record-video` tidak merekam video penuh, tetapi tetap menyimpan log prediksi dan satu preview. Perekaman video tanpa audio mencakup raw kamera serta dashboard; timestamp CSV adalah acuan waktu rekaman, bukan FPS container video. FFV1 lossless dapat membutuhkan ruang disk besar dan finalisasi memverifikasi ulang file.
+## Penggunaan
 
-## Lingkup
+Pilih indeks kamera, lalu **Mulai Kamera**. Q untuk keluar monitor, H untuk rincian, C untuk kalibrasi peserta pada monitor prototipe. Launcher memakai DirectShow untuk sumber kamera Windows. Mode default menjalankan threshold dan identitas sesi tanpa pemeriksaan keaslian wajah. Model anti-spoof tidak dibutuhkan untuk finalisasi mode threshold.
 
-Program lokal satu wajah, bukan detektor tahap tidur klinis. Kandidat menguap merupakan eksperimen dengan draft label; skor tidak terkalibrasi dan tidak mengubah keputusan mata. Versi ini untuk demonstrasi runnable, bukan sarana training. Model dan modul yang dibutuhkan jalur runtime dipertahankan; dependency training scikit-learn tidak diperlukan. Folder `.venv` dibuat khusus untuk PoC, tidak berbagi environment proyek penelitian.
+Output monitor prototipe berada di `outputs/multiperson/`. Source tidak menyertakan hasil sesi, rekaman kamera, embedding identitas, atau log pribadi.
+
+## Verifikasi paket pada PC Windows
+
+Pada pengujian 10 November 2026 di PC DESKTOP-O86AT10, runtime bawaan berhasil membuka kamera, memproses 139 frame, dan selesai tanpa kesalahan cleanup. Pengujian terpisah membuka kamera kembali. Model dan replay video juga dijalankan. Screenshot yang diperiksa menunjukkan jendela pengaturan, bukan bukti validasi kejadian kantuk pada wajah nyata.
+
+Path dengan emoji belum didukung. Validasi kejadian kantuk pada wajah nyata dan screenshot monitor langsung belum selesai. Pengujian eksekusi bukan ukuran akurasi deteksi.
+
+## Isi repository
+
+Hanya source runtime yang diperlukan, dependensi, lisensi vendor, dan tes regresi terarah. Runtime Python portable, ZIP distribusi, virtual environment, build, rekaman, hasil deteksi, dan log tidak dimasukkan ke commit. Aset siap pakai didistribusikan terpisah melalui GitHub Releases setelah pemeriksaan distribusi.
