@@ -1,0 +1,22 @@
+KP POC PORTABLE WINDOWS X64
+
+Ekstrak seluruh paket ke folder yang dapat ditulis.
+Klik KP_Deteksi_Kantuk.bat. Jangan pisahkan app dan runtime dari launcher.
+Python, pip, dan venv global tidak diperlukan pada komputer tujuan.
+
+Mode bawaan GUI: threshold EAR/MAR, kalibrasi, identitas sementara per sesi.
+Pemeriksaan keaslian wajah tidak aktif pada mode POC.
+Q: keluar monitor. H: rincian. C: kalibrasi peserta.
+Output sesi: app/outputs/multiperson/<session>/.
+Video tidak direkam kecuali --record-video atau --save-preview diberikan.
+
+Diagnostik:
+KP_Deteksi_Kantuk.bat --self-test
+CLI kamera:
+KP_Deteksi_Kantuk.bat --threshold-only --session-identity --max-seconds 30
+Regresi dari folder app:
+..\runtime\python\python.exe -E -s -m unittest discover -s tests -v
+
+Jika kamera gagal, periksa indeks kamera dan tutup aplikasi lain yang memakainya.
+Log kesalahan GUI disimpan di app/error.log atau direktori temporer pengguna
+jika folder aplikasi tidak dapat ditulis.
