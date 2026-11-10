@@ -1,5 +1,17 @@
 .venv/
+.venv*/
 outputs/
+**/outputs/
 __pycache__/
 *.py[cod]
 .env
+.env.*
+runtime/
+build/
+dist/
+*.zip
+*.log
+error.log
+recordings/
+embeddings/
+models/sface.onnx
